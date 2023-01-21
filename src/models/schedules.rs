@@ -1,7 +1,7 @@
-use crate::models::User::User;
-
+use crate::models::user::Tenant;
+#[allow(dead_code)]
 pub struct Schedules {
-    user: User,
+    user: Tenant,
     date: String,
     time: String,
 }

@@ -1,3 +1,3 @@
-pub mod User;
-pub mod Laundry;
-pub mod Schedules;
+pub mod user;
+pub mod laundry;
+pub mod schedules;

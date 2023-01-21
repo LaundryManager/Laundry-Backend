@@ -1,7 +1,8 @@
-use crate::models::User::User;
+use crate::models::user::Tenant;
+#[allow(dead_code)]
 
 pub struct Laundry {
-    user: User,
+    user: Tenant,
     status: String,
     date: String,
 }
