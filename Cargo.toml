@@ -1,0 +1,14 @@
+[package]
+name = "actix_test"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4.2.1"
+anyhow = "1.0.68"
+surrealdb = "1.0.0-beta.8"
+tokio = { version = "1.24.2", features = ["full"] }
+rust-argon2 = "1.0"
+serde = { version = "1.0.130", features = ["derive"] }
