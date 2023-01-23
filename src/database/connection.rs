@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use std::collections::BTreeMap;
 use surrealdb::sql::{Object, Value, thing};
 use surrealdb::{Datastore, Response, Session};
-use crate::models::user::Tenant;
+use crate::models::user::{Tenant, Login};
 
 pub type DB = (Datastore, Session);
 
@@ -18,7 +18,16 @@ pub async fn new_session() -> DB {
     
 }
 
-pub async fn create_user((ds, ses): &DB, user: Tenant) -> Result<String> {
+pub async fn show_all() -> Result<()>{
+    let (ds, ses): &DB = &new_session().await;
+    let sql = "SELECT * FROM user";
+    let ress = ds.execute(sql, ses, None, false).await?;
+    dbg!(&ress);
+    Ok(())
+}
+
+pub async fn create_user(user: Tenant) -> Result<String> {
+    let (ds, ses): &DB = &new_session().await;
     let sql = "CREATE user CONTENT $user";
 
     let name: BTreeMap<String, Value> = [
@@ -36,15 +45,14 @@ pub async fn create_user((ds, ses): &DB, user: Tenant) -> Result<String> {
 
     let ress = ds.execute(sql, ses, Some(vars), false).await?;
 
-
-    into_iter_types(ress).await?
+    into_iter_types(ress)?
         .next()
         .transpose()?
         .and_then(|x| x.get("id").map(|x| x.to_string()))
         .ok_or_else(|| anyhow!("No id"))    
     }
 
-pub async fn into_iter_types(ress: Vec<Response>) -> Result<impl Iterator<Item = Result<Object>>> {
+pub fn into_iter_types(ress: Vec<Response>) -> Result<impl Iterator<Item = Result<Object>>> {
     let res = ress.into_iter().next().map(|x| x.result).transpose()?;
 
     match res {
@@ -58,3 +66,30 @@ pub async fn into_iter_types(ress: Vec<Response>) -> Result<impl Iterator<Item =
         _ => Err(anyhow!("Expected array")),
     }
 }
+
+pub async fn verify_password(user: Login) -> Result<bool> {
+    let (ds, ses): &DB = &new_session().await;
+
+    let sql = "SELECT password FROM user WHERE login = $email LIMIT 1";
+
+    let vars: BTreeMap<String, Value> = [
+        ("email".into(), user.login.into()),
+    ].into();
+
+    let ress = ds.execute(sql, ses, Some(vars), false).await?;
+    dbg!(&ress);
+    let db_pass = into_iter_types(ress)?
+        .next()
+        .transpose()?
+        .and_then(|x| x.get("password").map(|x| x.to_string()))
+        .ok_or_else(|| anyhow!("no password"));
+
+    
+    let password_quotes_removed = db_pass?.replace('"', "");
+    match argon2::verify_encoded(&password_quotes_removed, user.password.as_bytes()) {
+        Ok(true) => Ok(true),
+        Ok(false) => Ok(false),
+        Err(_) => Ok(false),
+    }
+}
+
