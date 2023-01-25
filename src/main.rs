@@ -7,8 +7,9 @@ use actix_web::web::Json;
 use tools::hash_password::hash_password;
 #[allow(dead_code)]
 
-#[get("/")]
-async fn home() -> impl Responder {
+// -- Admin only
+#[get("/all")]
+async fn all_users() -> impl Responder {
     show_all().await;
     HttpResponse::Ok().body("Hello world!")
 }
@@ -42,7 +43,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(login)
             .service(register)
-            .service(home)
+            .service(all_users)
             
     })
     .bind(("127.0.0.1", 8080))?
