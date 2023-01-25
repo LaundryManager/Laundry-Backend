@@ -1,16 +1,16 @@
 mod models;
 mod tools;
 mod database;
-use database::connection::{show_all, create_user, verify_password};
+use actix_web::http::StatusCode;
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Json;
+use database::connection::{create_user, verify_password};
 use tools::hash_password::hash_password;
 #[allow(dead_code)]
 
 // -- Admin only
 #[get("/all")]
 async fn all_users() -> impl Responder {
-    show_all().await;
     HttpResponse::Ok().body("Hello world!")
 }
 
@@ -19,13 +19,19 @@ async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
     let desserialized_data = req_body.into_inner();
     let new_user = models::user::Tenant::new(desserialized_data.login, hash_password(desserialized_data.password), desserialized_data.apartment, desserialized_data.floor);
 
-    // -- Add log files
     match create_user(new_user).await {
-         Ok(_) => dbg!("User created"),
-         Err(_) => dbg!("Error"),
-    };
+         Ok(true) => {
+            dbg!("User created");
+            HttpResponse::Ok().status(StatusCode::CREATED).body("User created")
+        },
+         Ok(false) => {
+            dbg!("User not created");
+            HttpResponse::Ok().status(StatusCode::CONFLICT).body("Email already in use")
+         }
+         Err(_) => HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("User not created"),
+    }
 
-    HttpResponse::Ok()
+    //HttpResponse::Ok()
 }
 
 #[post("/login")]
