@@ -6,6 +6,13 @@ pub struct Login {
     pub password: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct TenantClaims {
+  pub login: String,
+  pub apartment: i32,
+  pub floor: i32,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Tenant {
     pub login: String,
