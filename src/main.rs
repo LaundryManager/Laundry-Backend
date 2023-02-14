@@ -4,7 +4,7 @@ mod database;
 use actix_web::http::StatusCode;
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Json;
-use database::connection::{create_user, verify_password};
+use database::connection::{create_user, verify_password, get_user_claims};
 use tools::hash_password::hash_password;
 #[allow(dead_code)]
 
@@ -37,7 +37,16 @@ async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
 #[post("/login")]
 async fn login(req_body: Json<models::user::Login>) -> impl Responder {
     match verify_password(req_body.into_inner()).await {
-        Ok(true) => HttpResponse::Ok().body("User verified"),
+        Ok(true) => {
+            match get_user_claims("leocacetudo23cm@email.com".into()).await {
+                Ok(claims) => {
+                    HttpResponse::Ok().json(claims)
+                },
+                Err(_) => {
+                    HttpResponse::Ok().status(StatusCode::UNAUTHORIZED).body("Username or Password invalid!")
+                }
+            }
+        },
         Ok(false) => HttpResponse::Ok().body("Invalid username or password"),
         Err(_) => HttpResponse::Ok().body("Invalid username or password"),
     }
