@@ -1,7 +1,7 @@
 use crate::models::user::{Login, Tenant, TenantClaims};
 use anyhow::{anyhow, Result};
 use std::collections::BTreeMap;
-use surrealdb::sql::{thing, Object, Value, Number, Values};
+use surrealdb::sql::{Object, Value};
 use surrealdb::{Datastore, Response, Session};
 
 pub type DB = (Datastore, Session);
@@ -113,8 +113,6 @@ pub async fn get_user_claims(login: String) -> Result<TenantClaims> {
         .transpose()
         .unwrap();
     
-
-
     match strings {
         Some(obj) => {
             Ok(extract_infos(obj).await)
