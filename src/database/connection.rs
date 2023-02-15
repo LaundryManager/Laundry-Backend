@@ -71,7 +71,6 @@ pub async fn create_user(user: Tenant) -> Result<bool> {
                 }
                 None => Ok(false),
             }
-            // Ok(true)
         }
         false => Ok(false),
     }
@@ -85,7 +84,6 @@ pub async fn verify_password(user: Login) -> Result<bool> {
     let vars: BTreeMap<String, Value> = [("email".into(), user.login.into())].into();
 
     let ress = ds.execute(sql, ses, Some(vars), false).await?;
-    dbg!(&ress);
     let db_pass = into_iter_types(ress)?
         .next()
         .transpose()?
