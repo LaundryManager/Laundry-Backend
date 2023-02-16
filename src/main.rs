@@ -6,6 +6,11 @@ use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use actix_web::web::Json;
 use database::connection::{create_user, verify_password, get_user_claims};
 use tools::hash_password::hash_password;
+use jsonwebtoken::{
+    encode,
+    Header,
+    EncodingKey,
+};
 #[allow(dead_code)]
 
 // -- Admin only
@@ -36,11 +41,14 @@ async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
 
 #[post("/login")]
 async fn login(req_body: Json<models::user::Login>) -> impl Responder {
-    match verify_password(req_body.into_inner()).await {
+    let login_struct = req_body.into_inner();
+    let login_value = login_struct.clone().login;
+    match verify_password(login_struct).await {
         Ok(true) => {
-            match get_user_claims("leocacetudo23cm@email.com".into()).await {
+            match get_user_claims(login_value).await {
                 Ok(claims) => {
-                    HttpResponse::Ok().json(claims)
+                    let jwt = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
+                    HttpResponse::Ok().insert_header(("Authorization", format!("Bearer {}", jwt))).json(jwt)
                 },
                 Err(_) => {
                     HttpResponse::Ok().status(StatusCode::UNAUTHORIZED).body("Username or Password invalid!")
