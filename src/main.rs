@@ -2,7 +2,7 @@ mod models;
 mod tools;
 mod database;
 use actix_web::http::StatusCode;
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, HttpRequest};
 use actix_web::web::Json;
 use database::connection::{create_user, verify_password, get_user_claims};
 use tools::hash_password::hash_password;
@@ -15,7 +15,14 @@ use jsonwebtoken::{
 
 // -- Admin only
 #[get("/all")]
-async fn all_users() -> impl Responder {
+async fn all_users(request: HttpRequest) -> impl Responder {
+    match request.headers().get("Authorization").and_then(|x| x.to_str().ok()) {
+        Some(header_value) => {
+            dbg!(header_value)
+        },
+        None => dbg!("header vazio")
+
+    };
     HttpResponse::Ok().body("Hello world!")
 }
 
@@ -32,11 +39,9 @@ async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
          Ok(false) => {
             dbg!("User not created");
             HttpResponse::Ok().status(StatusCode::CONFLICT).body("Email already in use")
-         }
+        }
          Err(_) => HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("User not created"),
     }
-
-    //HttpResponse::Ok()
 }
 
 #[post("/login")]
