@@ -5,6 +5,9 @@ This API are being created to handle laundry services. I will implement this as 
 Roadmap:
 - [ ] Reorganize the project structure
   - [ ] Implement config module
+    - [x] Added config files
+    - [x] Added development config extraction
+    - [ ] Implement Data Factory to load config files at compile time, before app runs
   - [ ] Implement handlers module
   - [ ] Implement models module
   - [ ] Implement routes module
