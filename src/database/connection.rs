@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::models::user::{Login, Tenant, TenantClaims};
 use anyhow::{anyhow, Result};
 use std::collections::BTreeMap;
