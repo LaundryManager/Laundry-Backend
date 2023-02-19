@@ -11,6 +11,7 @@ pub struct TenantClaims {
   pub login: String,
   pub apartment: i32,
   pub floor: i32,
+  pub exp: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
