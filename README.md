@@ -8,16 +8,18 @@ Roadmap:
     - [x] Added config files
     - [x] Added development config extraction
     - [ ] Implement Data Factory to load config files at compile time, before app runs
-  - [ ] Implement handlers module
-  - [ ] Implement models module
+      - [ ] Add Secret in Data Factory Items
+        - [ ] JWT Login
+        - [ ] JWT Handler
+  - [x] Implement handlers module
+  - [x] Implement models module
   - [ ] Implement routes module
-  - [ ] Implement utils module
-  - [ ] Implement schema module ? (I'm not sure if I will use this because seems redundant with models)
+  - [x] Implement utils module
   - [ ] Tests
     - [ ] Integration tests
     - [ ] Unit tests
-- [ ] Handlers
-  - [ ] Implement token validation
+- [x] Handlers
+  - [x] Implement token validation
 - [ ] Routes
   - [ ] Implement user routes
 
