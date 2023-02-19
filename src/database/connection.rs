@@ -4,6 +4,7 @@ use anyhow::{anyhow, Result};
 use std::collections::BTreeMap;
 use surrealdb::sql::{Object, Value};
 use surrealdb::{Datastore, Response, Session};
+use chrono::{Utc, Duration};
 
 pub type DB = (Datastore, Session);
 
@@ -55,6 +56,7 @@ pub async fn create_user(user: Tenant) -> Result<bool> {
                 ("password".into(), user.password.into()),
                 ("apartment".into(), user.apartment.into()),
                 ("floor".into(), user.floor.into()),
+
             ]
             .into();
 
@@ -136,7 +138,8 @@ pub async fn extract_infos(value: Object) -> TenantClaims {
         None => 0,
     };
 
-   TenantClaims { login, apartment, floor } 
+    let exp: usize = (Utc::now() + Duration::days(7)).timestamp() as usize; 
+   TenantClaims { login, apartment, floor, exp } 
 }
 
 pub async fn show_all() -> Result<()> {
