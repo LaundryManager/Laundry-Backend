@@ -38,13 +38,10 @@ impl FromRequest for AuthenticationToken {
 
     // TODO: Validate if the token is bearer.
 
-    let token_value = match authentication_token.split(' ').last() {
-        Some(token) => token,
-        None => "",
-    };
+    let token_value = authentication_token.split(' ').last().unwrap_or("");
 
 	let token_result: Result<TokenData<TenantClaims>, JwtError> = decode::<TenantClaims>(
-        &token_value,
+        token_value,
 	    &DecodingKey::from_secret("secret".as_ref()),
 	    &Validation::new(Algorithm::HS256),
 	);
