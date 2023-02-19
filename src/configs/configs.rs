@@ -8,6 +8,11 @@ pub struct ServerConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Secrets {
+    pub jwt_secret: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct DatabaseConfig {
     pub url: String,
     pub ns: String,
