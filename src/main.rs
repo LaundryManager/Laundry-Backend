@@ -2,7 +2,7 @@ mod models;
 mod utils;
 mod database;
 mod handlers;
-use handlers::jwt_handler::AuthenticationToken;
+use handlers::jwt_validation_handler::AuthenticationToken;
 use actix_web::http::StatusCode;
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, HttpRequest};
 use actix_web::web::Json;
