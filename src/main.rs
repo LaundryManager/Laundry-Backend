@@ -1,11 +1,13 @@
 mod models;
-mod tools;
+mod utils;
 mod database;
+mod handlers;
+use handlers::jwt_handler::AuthenticationToken;
 use actix_web::http::StatusCode;
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, HttpRequest};
 use actix_web::web::Json;
 use database::connection::{create_user, verify_password, get_user_claims};
-use tools::hash_password::hash_password;
+use utils::hash_password::hash_password;
 use jsonwebtoken::{
     encode,
     Header,
@@ -15,15 +17,9 @@ use jsonwebtoken::{
 
 // -- Admin only
 #[get("/all")]
-async fn all_users(request: HttpRequest) -> impl Responder {
-    match request.headers().get("Authorization").and_then(|x| x.to_str().ok()) {
-        Some(header_value) => {
-            dbg!(header_value)
-        },
-        None => dbg!("header vazio")
-
-    };
-    HttpResponse::Ok().body("Hello world!")
+async fn all_users(_request: HttpRequest, auth_token: AuthenticationToken) -> impl Responder {
+    dbg!(auth_token);
+    HttpResponse::Ok().body("Authorized")
 }
 
 #[post("/register")]
