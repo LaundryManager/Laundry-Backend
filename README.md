@@ -13,15 +13,15 @@ Roadmap:
         - [ ] JWT Handler
   - [x] Implement handlers module
   - [x] Implement models module
-  - [ ] Implement routes module
+  - [x] Implement routes module
   - [x] Implement utils module
   - [ ] Tests
     - [ ] Integration tests
     - [ ] Unit tests
 - [x] Handlers
   - [x] Implement token validation
-- [ ] Routes
-  - [ ] Implement user routes
+- [x] Routes
+  - [x] Implement user routes
 
 
 ## Next Project Structure
