@@ -1,19 +1,28 @@
 #![allow(dead_code)]
 use crate::models::user::{Login, Tenant, TenantClaims};
+use crate::configs::configs::Settings;
 use anyhow::{anyhow, Result};
 use std::collections::BTreeMap;
 use surrealdb::sql::{Object, Value};
-use surrealdb::{Datastore, Response, Session};
+use surrealdb::{Datastore, Response, Error, Session};
 use chrono::{Utc, Duration};
+use std::sync::Arc;
+use actix_web::web::Data;
 
 pub type DB = (Datastore, Session);
 
-pub async fn new_session() -> DB {
-    let datastore = Datastore::new("file://temp.db").await;
-    let session = Session::for_db("my_ns", "mydb");
-    match datastore {
-        Ok(datastore) => (datastore, session),
-        Err(e) => panic!("Error: {}", e),
+#[derive(Clone)]
+pub struct SurrealDBRepo {
+    pub datastore: Arc<Datastore>,
+    pub session: Session
+}
+
+impl SurrealDBRepo {
+    pub async fn init() -> Result<Self, Error> {
+        let settings = Settings::development().expect("Failed to read settings");
+        let datastore = Arc::new(Datastore::new(&settings.database.url).await?);
+        let session = Session::for_db(&settings.database.ns, &settings.database.db);
+        Ok(SurrealDBRepo { session, datastore })
     }
 }
 
@@ -32,12 +41,11 @@ pub fn into_iter_types(ress: Vec<Response>) -> Result<impl Iterator<Item = Resul
     }
 }
 
-pub async fn do_email_exist(user: String) -> Result<bool> {
-    let (ds, ses): &DB = &new_session().await;
+pub async fn do_email_exist(user: String, surreal: Data<SurrealDBRepo>) -> Result<bool> {
     let sql = "SELECT * FROM user WHERE login = $email LIMIT 1";
     let email: BTreeMap<String, Value> = [("email".into(), user.into())].into();
 
-    let response = ds.execute(sql, ses, Some(email), false).await?;
+    let response = surreal.datastore.execute(sql, &surreal.session, Some(email), false).await?;
     let res = into_iter_types(response)?.next().transpose()?;
 
     match res {
@@ -46,10 +54,9 @@ pub async fn do_email_exist(user: String) -> Result<bool> {
     }
 }
 
-pub async fn create_user(user: Tenant) -> Result<bool> {
-    match do_email_exist(user.login.clone()).await? {
+pub async fn create_user(user: Tenant, conn: Data<SurrealDBRepo>) -> Result<bool> {
+    match do_email_exist(user.login.clone(), conn.clone()).await? {
         true => {
-            let (ds, ses): &DB = &new_session().await;
             let sql = "CREATE user CONTENT $user";
             let name: BTreeMap<String, Value> = [
                 ("login".into(), user.login.into()),
@@ -62,7 +69,7 @@ pub async fn create_user(user: Tenant) -> Result<bool> {
 
             let vars: BTreeMap<String, Value> = [("user".into(), name.into())].into();
 
-            let ress = ds.execute(sql, ses, Some(vars), false).await?;
+            let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
             match into_iter_types(ress)?
                 .next()
                 .transpose()?
@@ -79,14 +86,12 @@ pub async fn create_user(user: Tenant) -> Result<bool> {
     }
 }
 
-pub async fn verify_password(user: Login) -> Result<bool> {
-    let (ds, ses): &DB = &new_session().await;
-
+pub async fn verify_password(user: Login, conn: Data<SurrealDBRepo>) -> Result<bool> {
     let sql = "SELECT password FROM user WHERE login = $email LIMIT 1";
 
     let vars: BTreeMap<String, Value> = [("email".into(), user.login.into())].into();
 
-    let ress = ds.execute(sql, ses, Some(vars), false).await?;
+    let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
     let db_pass = into_iter_types(ress)?
         .next()
         .transpose()?
@@ -101,14 +106,12 @@ pub async fn verify_password(user: Login) -> Result<bool> {
     }
 }
 
-pub async fn get_user_claims(login: String) -> Result<TenantClaims> {
-    let (ds, ses): &DB = &new_session().await;
-
+pub async fn get_user_claims(login: String, conn:   Data<SurrealDBRepo>) -> Result<TenantClaims> {
     let sql = "SELECT login, apartment, floor FROM user WHERE login = $email LIMIT 1";
 
     let vars: BTreeMap<String, Value> = [("email".into(), login.into())].into();
 
-    let ress = ds.execute(sql, ses, Some(vars), false).await?;
+    let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
     let strings = into_iter_types(ress)?
         .next()
         .transpose()
@@ -142,10 +145,9 @@ pub async fn extract_infos(value: Object) -> TenantClaims {
    TenantClaims { login, apartment, floor, exp } 
 }
 
-pub async fn show_all() -> Result<()> {
-    let (ds, ses): &DB = &new_session().await;
+pub async fn show_all(conn: SurrealDBRepo) -> Result<()> {
     let sql = "SELECT * FROM user";
-    let ress = ds.execute(sql, ses, None, false).await?;
+    let ress = conn.datastore.execute(sql, &conn.session, None, false).await?;
     dbg!(&ress);
     Ok(())
 }

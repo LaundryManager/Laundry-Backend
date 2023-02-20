@@ -23,6 +23,7 @@ pub struct DatabaseConfig {
 pub struct Settings {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
+    pub secret:  Secrets,
 }
 
 // Extract AppConfig
@@ -30,7 +31,6 @@ impl Settings {
     pub fn development() -> Result<Self, ConfigError> {
         let settings = Config::builder()
             .add_source(File::with_name("src/configs/development.toml"));
-
 
         match settings.build() {
             Ok(app_config) => app_config.try_deserialize(),

@@ -1,20 +1,11 @@
+use crate::configs::configs::Settings;
+use crate::{models, handlers, utils, database};
+use database::connection::{create_user, verify_password, get_user_claims, SurrealDBRepo};
+use utils::hash_password::hash_password;
 use handlers::jwt_validation_handler::AuthenticationToken;
 use actix_web::http::StatusCode;
-use actix_web::{Scope, HttpResponse, Responder, HttpRequest, web};
-use actix_web::web::Json;
-use database::connection::{create_user, verify_password, get_user_claims};
-use utils::hash_password::hash_password;
-use jsonwebtoken::{
-    encode,
-    Header,
-    EncodingKey,
-};
-
-use crate::handlers;
-use crate::utils;
-use crate::database;
-use crate::models;
-
+use actix_web::{Scope, HttpResponse, Responder, HttpRequest, web, web::Json, web::Data};
+use jsonwebtoken::{encode, Header, EncodingKey};
 
 pub fn user_scope() -> Scope {
     web::scope("/user")
@@ -28,11 +19,10 @@ async fn all_users(_request: HttpRequest, auth_token: AuthenticationToken) -> im
     HttpResponse::Ok().body("Authorized")
 }
 
-async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
+async fn register(req_body: Json<models::user::Tenant>, conn: Data<SurrealDBRepo>) -> impl Responder {
     let desserialized_data = req_body.into_inner();
     let new_user = models::user::Tenant::new(desserialized_data.login, hash_password(desserialized_data.password), desserialized_data.apartment, desserialized_data.floor);
-
-    match create_user(new_user).await {
+    match create_user(new_user, conn).await {
          Ok(true) => {
             dbg!("User created");
             HttpResponse::Ok().status(StatusCode::CREATED).body("User created")
@@ -45,14 +35,14 @@ async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
     }
 }
 
-async fn login(req_body: Json<models::user::Login>) -> impl Responder {
+async fn login(req_body: Json<models::user::Login>, conn: Data<SurrealDBRepo>, secret: Data<Settings>) -> impl Responder {
     let login_struct = req_body.into_inner();
     let login_value = login_struct.clone().login;
-    match verify_password(login_struct).await {
+    match verify_password(login_struct, conn.clone()).await {
         Ok(true) => {
-            match get_user_claims(login_value).await {
+            match get_user_claims(login_value, conn).await {
                 Ok(claims) => {
-                    let jwt = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
+                    let jwt = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.secret.jwt_secret.as_ref())).unwrap();
                     HttpResponse::Ok().insert_header(("Authorization", format!("Bearer {}", jwt))).json(jwt)
                 },
                 Err(_) => {

@@ -3,14 +3,14 @@
 This API are being created to handle laundry services. I will implement this as part of my Rust Backend learning journey.
 
 Roadmap:
-- [ ] Reorganize the project structure
-  - [ ] Implement config module
+- [x] Reorganize the project structure
+  - [x] Implement config module
     - [x] Added config files
     - [x] Added development config extraction
-    - [ ] Implement Data Factory to load config files at compile time, before app runs
-      - [ ] Add Secret in Data Factory Items
-        - [ ] JWT Login
-        - [ ] JWT Handler
+    - [x] Implement Data Factory to load config files at compile time, before app runs
+      - [x] Add Secret in Data Factory Items
+        - [x] JWT Login
+        - [x] JWT Handler
   - [x] Implement handlers module
   - [x] Implement models module
   - [x] Implement routes module
