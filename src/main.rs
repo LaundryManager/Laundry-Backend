@@ -1,73 +1,20 @@
 mod models;
-mod tools;
+mod utils;
 mod database;
-use actix_web::http::StatusCode;
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
-use actix_web::web::Json;
-use database::connection::{create_user, verify_password, get_user_claims};
-use tools::hash_password::hash_password;
-use jsonwebtoken::{
-    encode,
-    Header,
-    EncodingKey,
-};
-#[allow(dead_code)]
-
-// -- Admin only
-#[get("/all")]
-async fn all_users() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/register")]
-async fn register(req_body: Json<models::user::Tenant>) -> impl Responder {
-    let desserialized_data = req_body.into_inner();
-    let new_user = models::user::Tenant::new(desserialized_data.login, hash_password(desserialized_data.password), desserialized_data.apartment, desserialized_data.floor);
-
-    match create_user(new_user).await {
-         Ok(true) => {
-            dbg!("User created");
-            HttpResponse::Ok().status(StatusCode::CREATED).body("User created")
-        },
-         Ok(false) => {
-            dbg!("User not created");
-            HttpResponse::Ok().status(StatusCode::CONFLICT).body("Email already in use")
-         }
-         Err(_) => HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("User not created"),
-    }
-
-    //HttpResponse::Ok()
-}
-
-#[post("/login")]
-async fn login(req_body: Json<models::user::Login>) -> impl Responder {
-    let login_struct = req_body.into_inner();
-    let login_value = login_struct.clone().login;
-    match verify_password(login_struct).await {
-        Ok(true) => {
-            match get_user_claims(login_value).await {
-                Ok(claims) => {
-                    let jwt = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
-                    HttpResponse::Ok().insert_header(("Authorization", format!("Bearer {}", jwt))).json(jwt)
-                },
-                Err(_) => {
-                    HttpResponse::Ok().status(StatusCode::UNAUTHORIZED).body("Username or Password invalid!")
-                }
-            }
-        },
-        Ok(false) => HttpResponse::Ok().body("Invalid username or password"),
-        Err(_) => HttpResponse::Ok().body("Invalid username or password"),
-    }
-}
-
+mod handlers;
+mod routes;
+mod configs;
+use actix_web::{HttpServer, App, web::Data};
+use database::connection::SurrealDBRepo;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let surreal = Data::new(SurrealDBRepo::init().await.expect("Error connecting to database"));
+    let token_secret = Data::new(configs::configs::Settings::development().expect("Failed to read settings"));
+    HttpServer::new(move || {
         App::new()
-            .service(login)
-            .service(register)
-            .service(all_users)
-            
+            .app_data(surreal.clone())
+            .app_data(token_secret.clone())
+            .service(routes::user::user_scope())
     })
     .bind(("127.0.0.1", 8080))?
     .run()

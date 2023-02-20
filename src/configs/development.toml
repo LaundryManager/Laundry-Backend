@@ -1,0 +1,11 @@
+[server]
+host = "127.0.0.1"
+port = 8080
+
+[secret]
+jwt_secret = "ilovemila"
+
+[database]
+url = "file://develop.db"
+ns = "develop_ns"
+db = "develop_db"
