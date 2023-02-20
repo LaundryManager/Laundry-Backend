@@ -1,25 +1,26 @@
 use config::{Config, File, ConfigError,};
 use serde::{Deserialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct ServerConfig {
     pub host: String,
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct Secrets {
     pub jwt_secret: String,
+    pub password_salt: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct DatabaseConfig {
     pub url: String,
     pub ns: String,
     pub db: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq)]
 pub struct Settings {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
