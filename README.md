@@ -15,7 +15,7 @@ Roadmap:
   - [x] Implement models module
   - [x] Implement routes module
   - [x] Implement utils module
-  - [ ] Tests
+  - [x] Tests
     - [x] Integration tests * It will not be implemented for now
     - [x] Unit tests
       - [x] *? In which module should I implement unit tests?
