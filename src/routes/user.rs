@@ -1,6 +1,9 @@
+#![allow(dead_code)]
+
 use crate::configs::configs::Settings;
 use crate::{models, handlers, utils, database};
-use database::connection::{create_user, verify_password, get_user_claims, SurrealDBRepo};
+use database::connection::SurrealDBRepo;
+use database::user::*;
 use utils::hash_password::hash_password;
 use handlers::jwt_validation_handler::AuthenticationToken;
 use actix_web::http::StatusCode;
