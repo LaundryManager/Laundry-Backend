@@ -16,8 +16,9 @@ Roadmap:
   - [x] Implement routes module
   - [x] Implement utils module
   - [ ] Tests
-    - [ ] Integration tests
-    - [ ] Unit tests
+    - [x] Integration tests * It will not be implemented for now
+    - [x] Unit tests
+      - [x] *? In which module should I implement unit tests?
 - [x] Handlers
   - [x] Implement token validation
 - [x] Routes
