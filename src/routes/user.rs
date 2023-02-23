@@ -17,8 +17,9 @@ pub fn user_scope() -> Scope {
         .route("/login", web::post().to(login))
 }
 
-async fn all_users(_request: HttpRequest, auth_token: AuthenticationToken) -> impl Responder {
-    dbg!(auth_token);
+async fn all_users(_request: HttpRequest, _auth_token: AuthenticationToken, conn: Data<SurrealDBRepo>) -> impl Responder {
+    show_all(conn).await.unwrap();
+
     HttpResponse::Ok().body("Authorized")
 }
 
@@ -41,6 +42,7 @@ async fn register(req_body: Json<models::user::Tenant>, conn: Data<SurrealDBRepo
 async fn login(req_body: Json<models::user::Login>, conn: Data<SurrealDBRepo>, settings: Data<Settings>) -> impl Responder {
     let login_struct = req_body.into_inner();
     let login_value = login_struct.clone().login;
+    dbg!(login_struct.clone());
     match verify_password(login_struct, conn.clone()).await {
         Ok(true) => {
             match get_user_claims(login_value, conn).await {

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::models::user::{Login, Tenant, TenantClaims};
 use std::collections::BTreeMap;
 use actix_web::web::Data;
@@ -6,12 +7,11 @@ use chrono::{Utc, Duration};
 use anyhow::{anyhow, Result};
 use super::connection::*;
 
-pub async fn get_user_claims(login: String, conn:   Data<SurrealDBRepo>) -> Result<TenantClaims> {
-    let sql = "SELECT login, apartment, floor FROM user WHERE login = $email LIMIT 1";
+pub async fn get_user_claims(login: String, conn: Data<SurrealDBRepo>) -> Result<TenantClaims> {
+    let sql = format!("SELECT * FROM user:`{login}`");
 
-    let vars: BTreeMap<String, Value> = [("email".into(), login.into())].into();
-
-    let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
+    let ress = conn.datastore.execute(&sql, &conn.session, None, false).await?;
+    dbg!(&ress);
     let strings = into_iter_types(ress)?
         .next()
         .transpose()
@@ -29,29 +29,30 @@ pub async fn get_user_claims(login: String, conn:   Data<SurrealDBRepo>) -> Resu
 
 
 pub async fn generate_claim(value: Object) -> TenantClaims {
+    let id = value.get("id")
+    .ok_or("id not found")
+    .and_then(|obj| obj.to_owned().record().ok_or("obj has no id"))
+    .map(|val| val.id)
+    .unwrap_or("".into());
+
     let apartment: i32 = match value.get("apartment").map(|apartment| apartment.to_number().to_int()) { 
         Some(ap) => ap as i32,
         None => 0,
     };
-    let login = match value.get("login").map(|login| login.to_string()) {
-        Some(lg) => lg.replace('"', ""),
-        None => "".to_string(),
-    };
+
     let floor: i32 = match value.get("floor").map(|floor| floor.to_number().to_int()) {
         Some(fl) => fl as i32,
         None => 0,
     };
 
     let exp: usize = (Utc::now() + Duration::days(7)).timestamp() as usize; 
-   TenantClaims { login, apartment, floor, exp } 
+   TenantClaims { login: id.to_raw(), apartment, floor, exp } 
 }
 
 pub async fn verify_password(user: Login, conn: Data<SurrealDBRepo>) -> Result<bool> {
-    let sql = "SELECT password FROM user WHERE login = $email LIMIT 1";
+    let sql = format!("SELECT password FROM user:`{}`", user.login);
 
-    let vars: BTreeMap<String, Value> = [("email".into(), user.login.into())].into();
-
-    let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
+    let ress = conn.datastore.execute(&sql, &conn.session, None, false).await?;
     let db_pass = into_iter_types(ress)?
         .next()
         .transpose()?
@@ -69,9 +70,8 @@ pub async fn verify_password(user: Login, conn: Data<SurrealDBRepo>) -> Result<b
 pub async fn create_user(user: Tenant, conn: Data<SurrealDBRepo>) -> Result<bool> {
     match do_email_exist(user.login.clone(), conn.clone()).await? {
         true => {
-            let sql = "CREATE user CONTENT $user";
+            let sql = format!("CREATE user:`{}` CONTENT $user", user.login);
             let name: BTreeMap<String, Value> = [
-                ("login".into(), user.login.into()),
                 ("password".into(), user.password.into()),
                 ("apartment".into(), user.apartment.into()),
                 ("floor".into(), user.floor.into()),
@@ -81,12 +81,16 @@ pub async fn create_user(user: Tenant, conn: Data<SurrealDBRepo>) -> Result<bool
 
             let vars: BTreeMap<String, Value> = [("user".into(), name.into())].into();
 
-            let ress = conn.datastore.execute(sql, &conn.session, Some(vars), false).await?;
-            match into_iter_types(ress)?
+            let ress = conn.datastore.execute(&sql, &conn.session, Some(vars), false).await?;
+            dbg!(&ress);
+            let info =  into_iter_types(ress)?
                 .next()
                 .transpose()?
-                .and_then(|x| x.get("id").map(|x| x.to_string()))
-            {
+                .and_then(|x| x.get("id").map(|x| x.to_string()));
+            
+            dbg!(&info);
+
+            match info {
                 Some(id) => {
                     dbg!(id);
                     Ok(true)
@@ -99,10 +103,9 @@ pub async fn create_user(user: Tenant, conn: Data<SurrealDBRepo>) -> Result<bool
 }
 
 pub async fn do_email_exist(user: String, surreal: Data<SurrealDBRepo>) -> Result<bool> {
-    let sql = "SELECT * FROM user WHERE login = $email LIMIT 1";
-    let email: BTreeMap<String, Value> = [("email".into(), user.into())].into();
-
-    let response = surreal.datastore.execute(sql, &surreal.session, Some(email), false).await?;
+    let sql = format!("SELECT * FROM user:`{}`", user);
+    
+    let response = surreal.datastore.execute(&sql, &surreal.session, None, false).await?;
     let res = into_iter_types(response)?.next().transpose()?;
 
     match res {
@@ -110,10 +113,13 @@ pub async fn do_email_exist(user: String, surreal: Data<SurrealDBRepo>) -> Resul
         None => Ok(true),
     }
 }
-
-pub async fn show_all(conn: SurrealDBRepo) -> Result<()> {
+pub async fn show_all(conn: Data<SurrealDBRepo>) -> Result<()> {
     let sql = "SELECT * FROM user";
     let ress = conn.datastore.execute(sql, &conn.session, None, false).await?;
-    dbg!(&ress);
+    let all = into_iter_types(ress);
+    for item in all? {
+        dbg!(item?);
+        // TryInto::<Tenant>::try_into(item?)?
+    }
     Ok(())
 }

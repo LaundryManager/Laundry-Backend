@@ -60,3 +60,19 @@ Roadmap:
         ├── auth_test.rs
         └── ...
 ```
+
+Uso da lavanderia:
+Cada usuário pode usar uma das lavadoras por 1:30 horas por dia, os horários são fixos, começando a partir das 7 da manhã:
+
+- 7:00 - 8:30
+- 8:30 - 10:00
+- 10:00 - 11:30
+- 11:30 - 13:00
+- 13:00 - 14:30
+- 14:30 - 16:00
+- 16:00 - 17:30
+- 17:30 - 19:00
+- 19:00 - 20:30
+- 20:30 - 22:00
+
+Totalizando 10 horários disponíveis por dia. ( Se tiver mais de uma máquina o valor deve ser multiplicado pela quantidade de máquinas disponíveis. )
