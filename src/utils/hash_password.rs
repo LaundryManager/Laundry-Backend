@@ -1,7 +1,6 @@
 use argon2::{self, Config};
 
-pub fn hash_password(password: String) -> String {
-    let salt = "salt_for_laundry_app".as_bytes();
+pub fn hash_password(password: String, salt: String) -> String {
     let config = Config::default();
-    argon2::hash_encoded(password.as_bytes(), salt, &config).unwrap()
+    argon2::hash_encoded(password.as_bytes(), salt.as_bytes(), &config).unwrap()
 }

@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use surrealdb::sql::Object;
+use anyhow::anyhow;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Login {
@@ -13,7 +15,6 @@ pub struct TenantClaims {
   pub floor: i32,
   pub exp: usize,
 }
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Tenant {
     pub login: String,
@@ -21,6 +22,7 @@ pub struct Tenant {
     pub apartment: i32,
     pub floor: i32,
 }
+
 
 impl Tenant {
     pub fn new(login: String, password: String, apartment: i32, floor: i32) -> Tenant {
@@ -33,3 +35,20 @@ impl Tenant {
     }
 }
 
+impl TryFrom<Object> for Tenant {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        let login = value.get("login").map(|x| x.to_string()).ok_or_else(|| anyhow!("no login"))?.replace('"', "");
+        let password = value.get("password").map(|x| x.to_string()).ok_or_else(|| anyhow!("no password"))?.replace('"', "");
+        let apartment = value.get("apartment").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no apartment"))?;
+        let floor = value.get("floor").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no floor"))?;
+
+        Ok(Tenant {
+            login,
+            password,
+            apartment: apartment as i32,
+            floor: floor as i32,
+        })
+    }
+}
