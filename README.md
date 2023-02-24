@@ -2,6 +2,7 @@
 
 This API are being created to handle laundry services. I will implement this as part of my Rust Backend learning journey.
 
+Project Stopped until SurrealDB 1.0.0-beta.9 because i'm re-writing the full db every single time! Annoying.
 Roadmap:
 - [x] Reorganize the project structure
   - [x] Implement config module
