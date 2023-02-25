@@ -23,18 +23,6 @@ pub struct Tenant {
     pub floor: i32,
 }
 
-
-impl Tenant {
-    pub fn new(id: String, password: String, apartment: i32, floor: i32) -> Tenant {
-        Tenant {
-            id,
-            password,
-            apartment,
-            floor,
-        }
-    }
-}
-
 impl TryFrom<Object> for Tenant {
     type Error = anyhow::Error;
 

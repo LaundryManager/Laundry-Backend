@@ -15,9 +15,11 @@ pub struct Secrets {
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct DatabaseConfig {
+    pub username: String,
+    pub password: String,
     pub url: String,
-    pub ns: String,
-    pub db: String,
+    pub namespace: String,
+    pub database: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
