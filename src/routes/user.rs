@@ -1,61 +1,37 @@
 #![allow(dead_code)]
 
 use crate::configs::configs::Settings;
-use crate::{models, handlers, utils, database};
-use database::connection::SurrealDBRepo;
-use database::user::*;
-use utils::hash_password::hash_password;
-use handlers::jwt_validation_handler::AuthenticationToken;
+use crate::database::connection::Datab;
+use crate::database::user::create_claims_from_login;
+use crate::{models, database};
 use actix_web::http::StatusCode;
-use actix_web::{Scope, HttpResponse, Responder, HttpRequest, web, web::Json, web::Data};
+use actix_web::{Scope, HttpResponse, Responder, web, web::Json, web::Data};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
 pub fn user_scope() -> Scope {
     web::scope("/user")
-        .route("/all", web::get().to(all_users))
         .route("/register", web::post().to(register))
         .route("/login", web::post().to(login))
 }
 
-async fn all_users(_request: HttpRequest, _auth_token: AuthenticationToken, conn: Data<SurrealDBRepo>) -> impl Responder {
-    show_all(conn).await.unwrap();
-
-    HttpResponse::Ok().body("Authorized")
-}
-
-async fn register(req_body: Json<models::user::Tenant>, conn: Data<SurrealDBRepo>, settings: Data<Settings>) -> impl Responder {
-    let desserialized_data = req_body.into_inner();
-    let new_user = models::user::Tenant::new(desserialized_data.login, hash_password(desserialized_data.password, settings.secret.password_salt.clone()), desserialized_data.apartment, desserialized_data.floor);
-    match create_user(new_user, conn).await {
-         Ok(true) => {
-            dbg!("User created");
+async fn register(req_body: Json<models::user::Tenant>, conn: Data<Datab>, settings: Data<Settings>) -> impl Responder {
+    match database::user::create_user(req_body.into_inner(), conn, &settings.secret.password_salt).await {
+        Ok(true) => {
             HttpResponse::Ok().status(StatusCode::CREATED).body("User created")
         },
-         Ok(false) => {
-            dbg!("User not created");
-            HttpResponse::Ok().status(StatusCode::CONFLICT).body("Email already in use")
-        }
-         Err(_) => HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("User not created"),
+        Ok(false) => {HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("Try again later")},
+        Err(_) => {HttpResponse::Ok().status(StatusCode::NOT_ACCEPTABLE).body("Invalid user data")},
     }
 }
 
-async fn login(req_body: Json<models::user::Login>, conn: Data<SurrealDBRepo>, settings: Data<Settings>) -> impl Responder {
-    let login_struct = req_body.into_inner();
-    let login_value = login_struct.clone().login;
-    dbg!(login_struct.clone());
-    match verify_password(login_struct, conn.clone()).await {
-        Ok(true) => {
-            match get_user_claims(login_value, conn).await {
-                Ok(claims) => {
-                    let jwt = encode(&Header::default(), &claims, &EncodingKey::from_secret(settings.secret.jwt_secret.as_ref())).unwrap();
-                    HttpResponse::Ok().insert_header(("Authorization", format!("Bearer {}", jwt))).json(jwt)
-                },
-                Err(_) => {
-                    HttpResponse::Ok().status(StatusCode::UNAUTHORIZED).body("Username or Password invalid!")
-                }
-            }
+async fn login(req_body: Json<models::user::Login>, conn: Data<Datab>, settings: Data<Settings>) -> impl Responder {
+    let logins = req_body.into_inner();
+    match create_claims_from_login(logins, conn).await {
+        Ok(claims) => {
+            let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(settings.secret.jwt_secret.as_ref())).unwrap();
+            HttpResponse::Ok().status(StatusCode::CREATED).body(token)
         },
-        Ok(false) => HttpResponse::Ok().body("Invalid username or password"),
-        Err(_) => HttpResponse::Ok().body("Invalid username or password"),
+        Err(_) => {
+            HttpResponse::Ok().status(StatusCode::NOT_ACCEPTABLE).body("Invalid user data")},
     }
 }
