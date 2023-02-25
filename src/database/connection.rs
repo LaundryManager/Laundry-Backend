@@ -1,35 +1,20 @@
 use crate::configs::configs::Settings;
-use anyhow::{anyhow, Result};
-use surrealdb::sql::{Object, Value};
-use surrealdb::{Datastore, Response, Error, Session};
-use std::sync::Arc;
+use surrealdb::engine::remote::ws::{Ws, Client};
+use surrealdb::opt::auth::Root;
+use surrealdb::{Error, Surreal};
 
-#[derive(Clone)]
-pub struct SurrealDBRepo {
-    pub datastore: Arc<Datastore>,
-    pub session: Session
+pub struct Datab {
+    pub connection: Surreal<Client>
 }
 
-impl SurrealDBRepo {
+impl Datab {
     pub async fn init() -> Result<Self, Error> {
-        let settings = Settings::development().expect("Failed to read settings");
-        let datastore = Arc::new(Datastore::new(&settings.database.url).await?);
-        let session = Session::for_db(&settings.database.ns, &settings.database.db);
-        Ok(SurrealDBRepo { session, datastore })
-    }
-}
-
-pub fn into_iter_types(ress: Vec<Response>) -> Result<impl Iterator<Item = Result<Object>>> {
-    let res = ress.into_iter().next().map(|x| x.result).transpose()?;
-
-    match res {
-        Some(Value::Array(arr)) => {
-            let it = arr.into_iter().map(|v| match v {
-                Value::Object(object) => Ok(object),
-                _ => Err(anyhow!("Expected object")),
-            });
-            Ok(it)
-        }
-        _ => Err(anyhow!("Expected array")),
+        let datastore = Surreal::new::<Ws>("localhost:8000").await?;
+            datastore.signin(Root {
+                username: "root",
+                password: "root",
+            }).await?;
+            datastore.use_ns("namespace").use_db("database").await?;
+            Ok(Datab { connection: datastore })
     }
 }

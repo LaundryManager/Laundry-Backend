@@ -5,10 +5,11 @@ mod handlers;
 mod routes;
 mod configs;
 use actix_web::{HttpServer, App, web::Data};
-use database::connection::SurrealDBRepo;
+use database::connection::Datab;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let surreal = Data::new(SurrealDBRepo::init().await.expect("Error connecting to database"));
+    let surreal = Data::new(Datab::init().await.expect("Error connecting to database"));
     let token_secret = Data::new(configs::configs::Settings::development().expect("Failed to read settings"));
     HttpServer::new(move || {
         App::new()

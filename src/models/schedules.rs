@@ -66,7 +66,7 @@ impl TryFrom<Object> for Schedules {
         let agenda = SchedulesAgenda::number_to_enum(value.get("time").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no time"))? as i32);
         dbg!(user.clone());
         Ok(Schedules {
-            user: Tenant { login: "test".into(), password: "test".into(), apartment: 2, floor: 2 },
+            user: Tenant { id: "test".into(), password: "test".into(), apartment: 2, floor: 2 },
             agenda,
         })
     }

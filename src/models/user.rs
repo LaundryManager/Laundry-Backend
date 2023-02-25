@@ -17,7 +17,7 @@ pub struct TenantClaims {
 }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Tenant {
-    pub login: String,
+    pub id: String,
     pub password: String,
     pub apartment: i32,
     pub floor: i32,
@@ -25,9 +25,9 @@ pub struct Tenant {
 
 
 impl Tenant {
-    pub fn new(login: String, password: String, apartment: i32, floor: i32) -> Tenant {
+    pub fn new(id: String, password: String, apartment: i32, floor: i32) -> Tenant {
         Tenant {
-            login,
+            id,
             password,
             apartment,
             floor,
@@ -39,13 +39,13 @@ impl TryFrom<Object> for Tenant {
     type Error = anyhow::Error;
 
     fn try_from(value: Object) -> Result<Self, Self::Error> {
-        let login = value.get("login").map(|x| x.to_string()).ok_or_else(|| anyhow!("no login"))?.replace('"', "");
+        let id = value.get("id").map(|x| x.to_string()).ok_or_else(|| anyhow!("no login"))?.replace('"', "");
         let password = value.get("password").map(|x| x.to_string()).ok_or_else(|| anyhow!("no password"))?.replace('"', "");
         let apartment = value.get("apartment").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no apartment"))?;
         let floor = value.get("floor").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no floor"))?;
 
         Ok(Tenant {
-            login,
+            id,
             password,
             apartment: apartment as i32,
             floor: floor as i32,
