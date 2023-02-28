@@ -15,6 +15,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(surreal.clone())
             .app_data(token_secret.clone())
+            .service(routes::schedules::schedule_scope())
             .service(routes::user::user_scope())
     })
     .bind(("127.0.0.1", 8080))?

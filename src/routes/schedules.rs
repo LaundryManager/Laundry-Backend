@@ -1,10 +1,13 @@
-use actix_web::{Scope, HttpResponse, Responder, HttpRequest, web, web::Json, web::Data};
+use actix_web::{Scope, HttpResponse, Responder, HttpRequest, web, web::Json, web::Data, FromRequest};
+use crate::models::schedules::*;
 
-pub fn user_scope() -> Scope {
-    web::scope("/user")
-        .route("/all", web::get().to(all_users))
-        .route("/register", web::post().to(register))
-        .route("/login", web::post().to(login))
+pub fn schedule_scope() -> Scope {
+    web::scope("/agenda")
+        .route("/new", web::post().to(new_schedule))
 }
 
+pub async fn new_schedule(requisition: Json<ScheduleReq>) -> impl Responder {
+    dbg!(requisition);
 
+     HttpResponse::Ok()
+}

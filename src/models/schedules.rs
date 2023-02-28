@@ -1,4 +1,5 @@
 use crate::models::user::Tenant;
+use serde::Deserialize;
 use surrealdb::sql::Object;
 use anyhow::anyhow;
 use serde_json;
@@ -7,6 +8,11 @@ use serde_json;
 pub struct Schedules {
     user: Tenant,
     agenda: SchedulesAgenda,
+}
+
+#[derive(Debug,Deserialize)]
+pub struct ScheduleReq {
+    pub order: i8,
 }
 
 pub enum SchedulesAgenda {
