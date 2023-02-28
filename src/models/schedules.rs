@@ -1,5 +1,5 @@
 use crate::models::user::Tenant;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use surrealdb::sql::Object;
 use anyhow::anyhow;
 use serde_json;
@@ -10,9 +10,21 @@ pub struct Schedules {
     agenda: SchedulesAgenda,
 }
 
-#[derive(Debug,Deserialize)]
+#[derive(Debug,Deserialize, Serialize, Clone)]
+pub struct SchedulesQuery {
+    pub id: String,
+    pub order: i8,
+}
+
+#[derive(Debug,Deserialize, Serialize, Clone)]
 pub struct ScheduleReq {
     pub order: i8,
+}
+
+pub enum SchedulesError {
+    AlreadyInUse,
+    TooMuchTries,
+    InvalidInformations,
 }
 
 pub enum SchedulesAgenda {
@@ -75,5 +87,15 @@ impl TryFrom<Object> for Schedules {
             user: Tenant { id: "test".into(), password: "test".into(), apartment: 2, floor: 2 },
             agenda,
         })
+    }
+}
+
+impl TryFrom<Object> for ScheduleReq {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Object) -> Result<Self, Self::Error> {
+        let order = value.get("order").map(|x| x.to_number().to_int()).ok_or_else(|| anyhow!("no order"))? as i8;
+    
+        Ok(ScheduleReq { order })
     }
 }

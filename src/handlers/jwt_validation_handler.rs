@@ -21,7 +21,7 @@ use serde::{ Serialize, Deserialize };
 
 #[derive( Debug, Serialize, Deserialize)]
 pub struct AuthenticationToken {
-    id: TenantClaims,
+    pub id: TenantClaims,
 }
 
 impl FromRequest for AuthenticationToken {
