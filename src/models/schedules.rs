@@ -42,7 +42,7 @@ pub enum SchedulesAgenda {
 }
 
 impl SchedulesAgenda {
-    pub fn number_to_enum(number: i32) -> SchedulesAgenda {
+    pub fn number_to_enum(number: i32) -> Self {
         match number {
             1 => SchedulesAgenda::First,
             2 => SchedulesAgenda::Second,
