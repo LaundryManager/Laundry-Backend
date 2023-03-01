@@ -22,8 +22,9 @@ pub struct ScheduleReq {
 }
 
 pub enum SchedulesError {
-    AlreadyInUse,
-    TooMuchTries,
+    _AlreadyInUse,
+    _TooMuchTries,
+    RestrictedDateError,
     InvalidInformations,
 }
 
