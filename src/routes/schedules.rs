@@ -13,11 +13,12 @@ pub fn schedule_scope() -> Scope {
 pub async fn new_schedule(requisition: Json<ScheduleReq>, user: AuthenticationToken, bddata: Data<Datab>) -> impl Responder {
 
     match add_schedule(requisition.into_inner(), bddata, user.id.login).await {
-        Ok(_) => {
-            HttpResponse::Ok().status(StatusCode::CREATED).body("Done!")
+        Ok(tete) => {
+            HttpResponse::Ok().status(StatusCode::CREATED)
+                .body(format!("You can use at {}", tete.return_hour()))
         },
         Err(_) => {
-            HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("Do you have a valid JWT?")
+            HttpResponse::Ok().status(StatusCode::INTERNAL_SERVER_ERROR).body("Contact admin for more help!")
         }
     }
 }

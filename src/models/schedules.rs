@@ -18,7 +18,7 @@ pub struct SchedulesQuery {
 
 #[derive(Debug,Deserialize, Serialize, Clone)]
 pub struct ScheduleReq {
-    pub order: i8,
+  pub order: i8,
 }
 
 pub enum SchedulesError {
@@ -42,7 +42,7 @@ pub enum SchedulesAgenda {
 }
 
 impl SchedulesAgenda {
-    fn number_to_enum(number: i32) -> SchedulesAgenda {
+    pub fn number_to_enum(number: i32) -> SchedulesAgenda {
         match number {
             1 => SchedulesAgenda::First,
             2 => SchedulesAgenda::Second,
@@ -57,7 +57,7 @@ impl SchedulesAgenda {
             _ => SchedulesAgenda::Error,
         }
     }
-    fn return_hour(&self) -> String {
+    pub fn return_hour(&self) -> String {
         match self {
             SchedulesAgenda::First => "7:00".into(),
             SchedulesAgenda::Second => "8:30".into(),
