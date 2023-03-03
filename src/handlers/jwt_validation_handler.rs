@@ -30,7 +30,7 @@ impl FromRequest for AuthenticationToken {
 
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
     let app_data = req.app_data::<Data<Settings>>().unwrap();
-    dbg!(&app_data.secret.jwt_secret);
+    //dbg!(&app_data.secret.jwt_secret);
     // Need validations!
 	let authorization_header_option: Option<&HeaderValue> = req.headers().get(actix_web::http::header::AUTHORIZATION);
 	if authorization_header_option.is_none() { return ready(Err(ErrorUnauthorized("No authentication token sent!"))); }
