@@ -85,3 +85,11 @@ pub async fn add_schedule(query_data: ScheduleReq, conn: Data<Datab>, user: &Str
         },
     }
 }
+
+pub async fn all_today_schedules(conn: Data<Datab>) -> Result<bool, SchedulesError> {
+
+    let query_data = conn.connection.query("SELECT id, ->using->agenda.order FROM tenant WHERE count(->using->agenda) > 0");
+
+    dbg!(query_data);
+    Ok(true)
+}

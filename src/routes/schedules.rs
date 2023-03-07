@@ -8,10 +8,11 @@ use crate::database::connection::Datab;
 pub fn schedule_scope() -> Scope {
     web::scope("/agenda")
         .route("/new", web::post().to(new_schedule))
+        .route("/all", web::get().to(show_today_schedules)
+        )
 }
 
 pub async fn new_schedule(requisition: Json<ScheduleReq>, user: AuthenticationToken, bddata: Data<Datab>) -> impl Responder {
-
     match add_schedule(requisition.into_inner(), bddata, &user.id.login, &user).await {
         Ok(tete) => {
             HttpResponse::Ok().status(StatusCode::CREATED)
@@ -32,3 +33,8 @@ pub async fn new_schedule(requisition: Json<ScheduleReq>, user: AuthenticationTo
         }
     }
 }
+
+pub async fn show_today_schedules(bddata: Data<Datab>) -> impl Responder {
+    all_today_schedules(bddata).await;
+    HttpResponse::Ok().body("Hello")
+} 
