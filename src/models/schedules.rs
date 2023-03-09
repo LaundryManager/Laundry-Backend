@@ -1,4 +1,5 @@
 use crate::models::user::Tenant;
+use crate::utils::strings::clean_string;
 use serde::{Serialize, Deserialize};
 use surrealdb::sql::Object;
 use anyhow::anyhow;
@@ -72,6 +73,29 @@ impl SchedulesAgenda {
             SchedulesAgenda::Ninth => "19:00".into(),
             SchedulesAgenda::Tenth => "20:30".into(),
             _ => "Error".into(),
+        }
+    }
+}
+
+#[derive(Debug,Deserialize, Serialize, Clone)]
+pub struct Orders {
+    pub user: String,
+    pub orders: Vec<i32>,
+}
+
+impl Orders {
+    pub fn return_formated(list: Vec<Orders>) -> Vec<Self> {
+        let mut list_of_int: Vec<Self> = Vec::new();
+        for order in list {
+            list_of_int.push(order.formate_username());
+        }
+        list_of_int
+    }
+
+    pub fn formate_username(&self) -> Self {
+        Orders {
+            user: clean_string(self.user.clone()),
+            orders: self.orders.clone(),
         }
     }
 }

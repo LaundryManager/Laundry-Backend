@@ -1,5 +1,4 @@
 use actix_web::web::Data;
-use serde::{Serialize, Deserialize};
 use crate::models::schedules::*;
 use crate::database::connection::Datab;
 use crate::handlers::jwt_validation_handler::AuthenticationToken;
@@ -88,8 +87,9 @@ pub async fn add_schedule(query_data: ScheduleReq, conn: Data<Datab>, user: &Str
 }
 
 pub async fn all_today_schedules(conn: Data<Datab>) -> Result<Vec<Orders>, SchedulesError> {
-
-    let mut query_data = conn.connection.query("SELECT order FROM agenda WHERE array::sort::desc(order) > 0").await;
+    // what happens if the vec is empty?
+    let query_data = conn.connection
+    .query("SELECT id as user, ->using->agenda.order as orders FROM tenant WHERE count(->using->agenda) > 0").await;
 
     let test: Vec<Orders> = match query_data.unwrap().take(0) {
         Ok(result) => {
@@ -99,20 +99,5 @@ pub async fn all_today_schedules(conn: Data<Datab>) -> Result<Vec<Orders>, Sched
             return Err(SchedulesError::InvalidInformations);
         },
     };
-    Ok(test)
-}
-
-#[derive(Debug,Deserialize, Serialize, Clone)]
-pub struct Orders {
-    pub order: i32,
-}
-
-impl Orders {
-    pub fn return_list(list: Vec<Orders>) -> Vec<i32> {
-        let mut list_of_int: Vec<i32> = Vec::new();
-        for order in list {
-            list_of_int.push(order.order);
-        }
-        list_of_int
-    }
+    Ok(Orders::return_formated(test))
 }
