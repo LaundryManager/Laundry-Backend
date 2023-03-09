@@ -87,7 +87,7 @@ pub async fn add_schedule(query_data: ScheduleReq, conn: Data<Datab>, user: &Str
     }
 }
 
-pub async fn all_today_schedules(conn: Data<Datab>) -> Result<bool, SchedulesError> {
+pub async fn all_today_schedules(conn: Data<Datab>) -> Result<Vec<Orders>, SchedulesError> {
 
     let mut query_data = conn.connection.query("SELECT order FROM agenda WHERE array::sort::desc(order) > 0").await;
 
@@ -99,11 +99,7 @@ pub async fn all_today_schedules(conn: Data<Datab>) -> Result<bool, SchedulesErr
             return Err(SchedulesError::InvalidInformations);
         },
     };
-
-    let list = Orders::return_list(test);
-
-    dbg!(list);
-    Ok(true)
+    Ok(test)
 }
 
 #[derive(Debug,Deserialize, Serialize, Clone)]

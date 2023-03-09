@@ -21,6 +21,7 @@ pub struct ScheduleReq {
   pub order: i8,
 }
 
+#[derive(Debug)]
 pub enum SchedulesError {
     _AlreadyInUse,
     _TooMuchTries,

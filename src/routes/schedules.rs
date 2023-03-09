@@ -35,6 +35,7 @@ pub async fn new_schedule(requisition: Json<ScheduleReq>, user: AuthenticationTo
 }
 
 pub async fn show_today_schedules(bddata: Data<Datab>) -> impl Responder {
-    all_today_schedules(bddata).await;
-    HttpResponse::Ok().body("Hello")
+    let all = all_today_schedules(bddata).await;
+
+    HttpResponse::Ok().json(web::Json(all.unwrap()))
 } 
